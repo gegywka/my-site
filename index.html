@@ -1,53 +1,76 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gegywka Profile</title>
-    <style>
-        /* Базовые стили для красоты */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
-        }
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #24292e;
-            margin-bottom: 0.5rem;
-        }
-        p {
-            color: #6a737d;
-            font-size: 1.1rem;
-        }
-        .status {
-            display: inline-block;
-            background-color: #28a745;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            margin-top: 1rem;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Gegywka</h1>
-        <p>Мой персональный сайт на GitHub Pages</p>
-        <span class="status">Опубликовано с мобильного устройства</span>
-    </div>
-</body>
-</html>
+(function () {
+    'use strict';
 
+    // Инициализация вашего чистого плагина
+    function startMyPlugin() {
+        window.MyFreeStream_plugin = true;
+
+        var manifest = {
+            type: 'video',
+            version: '1.0.0',
+            name: 'Lite Proxy Stream',
+            description: 'Прямой доступ к видео без лишнего мусора',
+            component: 'LiteStreamProxy',
+        };
+
+        Lampa.Manifest.plugins = manifest;
+
+        // Добавляем кнопку просмотра в карточку фильма
+        Lampa.Listener.follow('full', function (e) {
+            if (e.type == 'complite') {
+                // Создаем кнопку интерфейса
+                var btn = $('<div class="full-start__button selector button--custom-stream"><span>Смотреть Бесплатно</span></div>');
+                
+                btn.on('hover:enter', function () {
+                    // Передаем данные о фильме в функцию поиска
+                    findAndPlayStream(e.data.movie);
+                });
+                
+                // Размещаем кнопку после стандартной кнопки торрентов
+                e.object.activity.render().find('.view--torrent').after(btn);
+            }
+        });
+    }
+
+    // Логика поиска и воспроизведения
+    function findAndPlayStream(movie) {
+        Lampa.Noty.show('Ищем лучшие источники...');
+
+        // Здесь должен быть URL вашего Python-скрипта или публичного API, 
+        // который возвращает прямую ссылку на видео. 
+        // В качестве примера используем гипотетический API-роут.
+        var searchApiUrl = 'https://api.my-custom-proxy.network/search?tmdb_id=' + movie.id + '&title=' + encodeURIComponent(movie.title);
+
+        // Lampa.Reguest (с опечаткой через G) — это встроенный сетевой модуль Лампы
+        var network = new Lampa.Reguest();
+        
+        network.silent(searchApiUrl, function (response) {
+            // Ожидаем, что ваш API вернет JSON вида: {"stream_url": "https://rezka.com/video.mp4", "quality": "1080p"}
+            if (response && response.stream_url) {
+                
+                // Формируем плейлист для встроенного плеера
+                var playlist = [{
+                    title: movie.title,
+                    url: response.stream_url,
+                    quality: response.quality || 'Auto'
+                }];
+
+                // Запускаем воспроизведение
+                Lampa.Player.play(playlist[0]);
+                Lampa.Player.playlist(playlist);
+                
+            } else {
+                Lampa.Noty.show('Видео не найдено на источнике');
+            }
+        }, function () {
+            Lampa.Noty.show('Ошибка: Прокси-сервер недоступен');
+        }, false, {
+            dataType: 'json'
+        });
+    }
+
+    // Запускаем плагин, если он еще не запущен
+    if (!window.MyFreeStream_plugin) {
+        startMyPlugin();
+    }
+})();
