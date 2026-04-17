@@ -1,46 +1,45 @@
-(function () { 
+э(function () { 
     'use strict'; 
 
     function startMyPlugin() { 
         window.MyFreeStream_plugin = true; 
         var manifest = { 
             type: 'video', 
-            version: '1.1.0', 
-            name: 'Lite Proxy Stream TEST', 
-            description: 'Тестовый запуск без бэкенда', 
+            version: '1.1.1', 
+            name: 'Lite Proxy Stream FIX', 
+            description: 'Исправлено нажатие и добавлена ссылка', 
             component: 'LiteStreamProxy', 
         }; 
         Lampa.Manifest.plugins = manifest; 
 
         Lampa.Listener.follow('full', function (e) { 
             if (e.type == 'complite') { 
-                // Создаем кнопку в интерфейсе
-                var btn = $('<div class="button--install full-start__button view--torrent">Смотреть ТЕСТ</div>'); 
+                // Создаем кнопку. Добавили стили для заметности
+                var btn = $('<div class="button--install full-start__button view--torrent" style="margin-bottom: 10px;">Смотреть ФИЛЬМ</div>'); 
                 
-                btn.on('hover:enter', function () { 
+                // Исправлено: теперь слушаем и hover:enter, и обычный click
+                btn.on('click hover:enter', function () { 
                     findAndPlayStream(e.data.movie); 
                 }); 
 
-                // Добавляем кнопку после кнопки торрентов
                 e.object.activity.render().find('.view--torrent').after(btn); 
             } 
         }); 
     } 
 
     function findAndPlayStream(movie) { 
-        Lampa.Noty.show('Запуск тестового видео...'); 
+        Lampa.Noty.show('Запуск: ' + movie.title); 
 
-        // ТЕСТОВАЯ ССЫЛКА: Это открытый видеофайл mp4 (трейлер), который работает везде.
-        // Когда проверишь, что это работает, мы заменим это на реальный ответ от балансера.
-        var testVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'; 
+        // РЕАЛЬНАЯ ССЫЛКА ДЛЯ ТЕСТА (Очень страшное кино / Scary Movie)
+        // В будущем твой Python-бэкенд будет присылать такую ссылку автоматически
+        var realMovieUrl = 'https://archive.org/download/scary-movie-2000_202204/Scary%20Movie%20%282000%29.mp4'; 
 
         var playlist = [{ 
-            title: movie.title + ' (ТЕСТ)', 
-            url: testVideoUrl, 
-            quality: '1080p' 
+            title: movie.title, 
+            url: realMovieUrl, 
+            quality: '720p' 
         }]; 
 
-        // Мгновенный запуск плеера Lampa
         Lampa.Player.play(playlist[0]); 
         Lampa.Player.playlist(playlist); 
     } 
