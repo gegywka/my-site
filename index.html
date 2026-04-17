@@ -1,75 +1,73 @@
 (function () {
     'use strict';
 
-    // Инициализация вашего чистого плагина
     function startMyPlugin() {
         window.MyFreeStream_plugin = true;
 
         var manifest = {
             type: 'video',
-            version: '1.0.0',
+            version: '1.1.0',
             name: 'Lite Proxy Stream',
-            description: 'Прямой доступ к видео без лишнего мусора',
+            description: 'Прямой доступ к видео через VideoCDN',
             component: 'LiteStreamProxy',
         };
 
         Lampa.Manifest.plugins = manifest;
 
-        // Добавляем кнопку просмотра в карточку фильма
         Lampa.Listener.follow('full', function (e) {
             if (e.type == 'complite') {
-                // Создаем кнопку интерфейса
+                // Создаем кнопку в интерфейсе
                 var btn = $('<div class="full-start__button selector button--custom-stream"><span>Смотреть Бесплатно</span></div>');
                 
                 btn.on('hover:enter', function () {
-                    // Передаем данные о фильме в функцию поиска
                     findAndPlayStream(e.data.movie);
                 });
                 
-                // Размещаем кнопку после стандартной кнопки торрентов
+                // Добавляем кнопку после кнопки торрентов
                 e.object.activity.render().find('.view--torrent').after(btn);
             }
         });
     }
 
-    // Логика поиска и воспроизведения
+    // ОБНОВЛЕННАЯ ЛОГИКА: Работа с балансером
     function findAndPlayStream(movie) {
-        Lampa.Noty.show('Ищем лучшие источники...');
+        Lampa.Noty.show('Поиск в базе VideoCDN...');
 
-        // Здесь должен быть URL вашего Python-скрипта или публичного API, 
-        // который возвращает прямую ссылку на видео. 
-        // В качестве примера используем гипотетический API-роут.
-        var searchApiUrl = 'https://api.my-custom-proxy.network/search?tmdb_id=' + movie.id + '&title=' + encodeURIComponent(movie.title);
+        // Для работы нужен API токен. 
+        // ВНИМАНИЕ: Это публичный пример, для стабильной работы лучше иметь свой.
+        var apiToken = '3i4nSeast4jtS_bad_example_token'; 
+        var searchApiUrl = 'https://videocdn.tv/api/short?api_token=' + apiToken + '&tmdb_id=' + movie.id;
 
-        // Lampa.Reguest (с опечаткой через G) — это встроенный сетевой модуль Лампы
         var network = new Lampa.Reguest();
         
         network.silent(searchApiUrl, function (response) {
-            // Ожидаем, что ваш API вернет JSON вида: {"stream_url": "https://rezka.com/video.mp4", "quality": "1080p"}
-            if (response && response.stream_url) {
-                
-                // Формируем плейлист для встроенного плеера
-                var playlist = [{
-                    title: movie.title,
-                    url: response.stream_url,
-                    quality: response.quality || 'Auto'
-                }];
+            if (response && response.data && response.data.length > 0) {
+                var item = response.data[0]; 
+                var streamUrl = item.iframe_url;
 
-                // Запускаем воспроизведение
-                Lampa.Player.play(playlist[0]);
-                Lampa.Player.playlist(playlist);
-                
+                if (streamUrl) {
+                    if (streamUrl.indexOf('//') === 0) streamUrl = 'https:' + streamUrl;
+
+                    var playlist = [{
+                        title: movie.title,
+                        url: streamUrl,
+                        quality: 'Auto'
+                    }];
+
+                    // Передаем ссылку во встроенный плеер Lampa
+                    Lampa.Player.play(playlist[0]);
+                    Lampa.Player.playlist(playlist);
+                }
             } else {
-                Lampa.Noty.show('Видео не найдено на источнике');
+                Lampa.Noty.show('Видео не найдено в базе');
             }
         }, function () {
-            Lampa.Noty.show('Ошибка: Прокси-сервер недоступен');
+            Lampa.Noty.show('Ошибка: Балансер не отвечает');
         }, false, {
             dataType: 'json'
         });
     }
 
-    // Запускаем плагин, если он еще не запущен
     if (!window.MyFreeStream_plugin) {
         startMyPlugin();
     }
