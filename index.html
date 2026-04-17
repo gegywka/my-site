@@ -1,16 +1,51 @@
-function findAndPlayStream(movie) {
-    Lampa.Noty.show('Тестовый запуск плеера...');
+(function () { 
+    'use strict'; 
 
-    // Используем прямую тестовую ссылку (это видео-трейлер в формате MP4)
-    var testStreamUrl = 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+    function startMyPlugin() { 
+        window.MyFreeStream_plugin = true; 
+        var manifest = { 
+            type: 'video', 
+            version: '1.1.0', 
+            name: 'Lite Proxy Stream TEST', 
+            description: 'Тестовый запуск без бэкенда', 
+            component: 'LiteStreamProxy', 
+        }; 
+        Lampa.Manifest.plugins = manifest; 
 
-    var playlist = [{
-        title: 'ТЕСТ: ' + movie.title,
-        url: testStreamUrl,
-        quality: 'Full HD'
-    }];
+        Lampa.Listener.follow('full', function (e) { 
+            if (e.type == 'complite') { 
+                // Создаем кнопку в интерфейсе
+                var btn = $('<div class="button--install full-start__button view--torrent">Смотреть ТЕСТ</div>'); 
+                
+                btn.on('hover:enter', function () { 
+                    findAndPlayStream(e.data.movie); 
+                }); 
 
-    // Проверяем, подхватит ли Lampa это видео
-    Lampa.Player.play(playlist[0]);
-    Lampa.Player.playlist(playlist);
-}
+                // Добавляем кнопку после кнопки торрентов
+                e.object.activity.render().find('.view--torrent').after(btn); 
+            } 
+        }); 
+    } 
+
+    function findAndPlayStream(movie) { 
+        Lampa.Noty.show('Запуск тестового видео...'); 
+
+        // ТЕСТОВАЯ ССЫЛКА: Это открытый видеофайл mp4 (трейлер), который работает везде.
+        // Когда проверишь, что это работает, мы заменим это на реальный ответ от балансера.
+        var testVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'; 
+
+        var playlist = [{ 
+            title: movie.title + ' (ТЕСТ)', 
+            url: testVideoUrl, 
+            quality: '1080p' 
+        }]; 
+
+        // Мгновенный запуск плеера Lampa
+        Lampa.Player.play(playlist[0]); 
+        Lampa.Player.playlist(playlist); 
+    } 
+
+    if (!window.MyFreeStream_plugin) { 
+        startMyPlugin(); 
+    } 
+})();
