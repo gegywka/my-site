@@ -2,46 +2,54 @@
     'use strict';
 
     function startMyPlugin() {
-        // Проверяем, не запущен ли плагин уже
         if (window.MyFreeStream_plugin_loaded) return;
         window.MyFreeStream_plugin_loaded = true;
 
         var manifest = {
             type: 'video',
-            version: '1.1.2',
-            name: 'Lite Stream Fix',
-            description: 'Исправленная версия без ошибок',
-            component: 'LiteStreamProxy',
+            version: '1.2.0',
+            name: 'Cinema Stream Pro',
+            description: 'Интеграция с Python Backend',
+            component: 'CinemaProxy',
         };
 
         Lampa.Manifest.plugins = manifest;
 
-        // Следим за открытием карточки фильма
         Lampa.Listener.follow('full', function (e) {
             if (e.type === 'complite') {
                 try {
-                    // Создаем кнопку вручную через стандартный класс Lampa
-                    var btn = $('<div class="button--install full-start__button view--torrent">Смотреть ФИЛЬМ</div>');
+                    // 1. Создаем кнопку с SVG иконкой и текстом
+                    var btn = $(`
+                        <div class="button--install full-start__button view--torrent" style="background-color: #ff3d00 !important; color: #fff !important; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:1.5em; height:1.5em; margin-right:8px;">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            <span>Смотреть Онлайн</span>
+                        </div>
+                    `);
 
-                    // Добавляем обработчик нажатия
+                    // 2. Обработка нажатия
                     btn.on('click', function () {
-                        Lampa.Noty.show('Загрузка видео...');
-                        
-                        var movieData = e.data.movie;
-                        // Ссылка на "Очень страшное кино" из открытого архива
-                        var videoUrl = 'https://archive.org/download/scary-movie-2000_202204/Scary%20Movie%20%282000%29.mp4';
+                        var movie = e.data.movie;
+                        Lampa.Noty.show('Поиск фильма: ' + movie.title);
+
+                        /* ЛОГИКА ДЛЯ ТВОЕГО ПИТОНА:
+                           Когда запустишь сервер, мы заменим 'videoUrl' на запрос к твоему API.
+                           Пока оставляем стабильную тестовую ссылку, которая ТОЧНО работает.
+                        */
+                        var videoUrl = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
 
                         var playlist = [{
-                            title: movieData.title,
+                            title: movie.title,
                             url: videoUrl,
-                            quality: '720p'
+                            quality: 'Auto'
                         }];
 
                         Lampa.Player.play(playlist[0]);
                         Lampa.Player.playlist(playlist);
                     });
 
-                    // Вставляем кнопку в интерфейс
+                    // 3. Вставка в интерфейс
                     var container = e.object.activity.render().find('.view--torrent');
                     if (container.length > 0) {
                         container.after(btn);
@@ -53,12 +61,12 @@
         });
     }
 
-    // Запуск плагина через безопасный интервал, чтобы Lampa успела прогрузиться
+    // Ожидание загрузки Lampa
     var waitLampa = setInterval(function() {
         if (window.Lampa) {
             clearInterval(waitLampa);
             startMyPlugin();
         }
-    }, 100);
+    }, 200);
 
 })();
