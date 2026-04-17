@@ -1,50 +1,64 @@
-э(function () { 
-    'use strict'; 
+(function () {
+    'use strict';
 
-    function startMyPlugin() { 
-        window.MyFreeStream_plugin = true; 
-        var manifest = { 
-            type: 'video', 
-            version: '1.1.1', 
-            name: 'Lite Proxy Stream FIX', 
-            description: 'Исправлено нажатие и добавлена ссылка', 
-            component: 'LiteStreamProxy', 
-        }; 
-        Lampa.Manifest.plugins = manifest; 
+    function startMyPlugin() {
+        // Проверяем, не запущен ли плагин уже
+        if (window.MyFreeStream_plugin_loaded) return;
+        window.MyFreeStream_plugin_loaded = true;
 
-        Lampa.Listener.follow('full', function (e) { 
-            if (e.type == 'complite') { 
-                // Создаем кнопку. Добавили стили для заметности
-                var btn = $('<div class="button--install full-start__button view--torrent" style="margin-bottom: 10px;">Смотреть ФИЛЬМ</div>'); 
-                
-                // Исправлено: теперь слушаем и hover:enter, и обычный click
-                btn.on('click hover:enter', function () { 
-                    findAndPlayStream(e.data.movie); 
-                }); 
+        var manifest = {
+            type: 'video',
+            version: '1.1.2',
+            name: 'Lite Stream Fix',
+            description: 'Исправленная версия без ошибок',
+            component: 'LiteStreamProxy',
+        };
 
-                e.object.activity.render().find('.view--torrent').after(btn); 
-            } 
-        }); 
-    } 
+        Lampa.Manifest.plugins = manifest;
 
-    function findAndPlayStream(movie) { 
-        Lampa.Noty.show('Запуск: ' + movie.title); 
+        // Следим за открытием карточки фильма
+        Lampa.Listener.follow('full', function (e) {
+            if (e.type === 'complite') {
+                try {
+                    // Создаем кнопку вручную через стандартный класс Lampa
+                    var btn = $('<div class="button--install full-start__button view--torrent">Смотреть ФИЛЬМ</div>');
 
-        // РЕАЛЬНАЯ ССЫЛКА ДЛЯ ТЕСТА (Очень страшное кино / Scary Movie)
-        // В будущем твой Python-бэкенд будет присылать такую ссылку автоматически
-        var realMovieUrl = 'https://archive.org/download/scary-movie-2000_202204/Scary%20Movie%20%282000%29.mp4'; 
+                    // Добавляем обработчик нажатия
+                    btn.on('click', function () {
+                        Lampa.Noty.show('Загрузка видео...');
+                        
+                        var movieData = e.data.movie;
+                        // Ссылка на "Очень страшное кино" из открытого архива
+                        var videoUrl = 'https://archive.org/download/scary-movie-2000_202204/Scary%20Movie%20%282000%29.mp4';
 
-        var playlist = [{ 
-            title: movie.title, 
-            url: realMovieUrl, 
-            quality: '720p' 
-        }]; 
+                        var playlist = [{
+                            title: movieData.title,
+                            url: videoUrl,
+                            quality: '720p'
+                        }];
 
-        Lampa.Player.play(playlist[0]); 
-        Lampa.Player.playlist(playlist); 
-    } 
+                        Lampa.Player.play(playlist[0]);
+                        Lampa.Player.playlist(playlist);
+                    });
 
-    if (!window.MyFreeStream_plugin) { 
-        startMyPlugin(); 
-    } 
+                    // Вставляем кнопку в интерфейс
+                    var container = e.object.activity.render().find('.view--torrent');
+                    if (container.length > 0) {
+                        container.after(btn);
+                    }
+                } catch (err) {
+                    console.error('Plugin Error:', err);
+                }
+            }
+        });
+    }
+
+    // Запуск плагина через безопасный интервал, чтобы Lampa успела прогрузиться
+    var waitLampa = setInterval(function() {
+        if (window.Lampa) {
+            clearInterval(waitLampa);
+            startMyPlugin();
+        }
+    }, 100);
+
 })();
