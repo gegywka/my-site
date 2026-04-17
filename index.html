@@ -1,74 +1,16 @@
-(function () {
-    'use strict';
+function findAndPlayStream(movie) {
+    Lampa.Noty.show('Тестовый запуск плеера...');
 
-    function startMyPlugin() {
-        window.MyFreeStream_plugin = true;
+    // Используем прямую тестовую ссылку (это видео-трейлер в формате MP4)
+    var testStreamUrl = 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
-        var manifest = {
-            type: 'video',
-            version: '1.1.0',
-            name: 'Lite Proxy Stream',
-            description: 'Прямой доступ к видео через VideoCDN',
-            component: 'LiteStreamProxy',
-        };
+    var playlist = [{
+        title: 'ТЕСТ: ' + movie.title,
+        url: testStreamUrl,
+        quality: 'Full HD'
+    }];
 
-        Lampa.Manifest.plugins = manifest;
-
-        Lampa.Listener.follow('full', function (e) {
-            if (e.type == 'complite') {
-                // Создаем кнопку в интерфейсе
-                var btn = $('<div class="full-start__button selector button--custom-stream"><span>Смотреть Бесплатно</span></div>');
-                
-                btn.on('hover:enter', function () {
-                    findAndPlayStream(e.data.movie);
-                });
-                
-                // Добавляем кнопку после кнопки торрентов
-                e.object.activity.render().find('.view--torrent').after(btn);
-            }
-        });
-    }
-
-    // ОБНОВЛЕННАЯ ЛОГИКА: Работа с балансером
-    function findAndPlayStream(movie) {
-        Lampa.Noty.show('Поиск в базе VideoCDN...');
-
-        // Для работы нужен API токен. 
-        // ВНИМАНИЕ: Это публичный пример, для стабильной работы лучше иметь свой.
-        var apiToken = '3i4nSeast4jtS_bad_example_token'; 
-        var searchApiUrl = 'https://videocdn.tv/api/short?api_token=' + apiToken + '&tmdb_id=' + movie.id;
-
-        var network = new Lampa.Reguest();
-        
-        network.silent(searchApiUrl, function (response) {
-            if (response && response.data && response.data.length > 0) {
-                var item = response.data[0]; 
-                var streamUrl = item.iframe_url;
-
-                if (streamUrl) {
-                    if (streamUrl.indexOf('//') === 0) streamUrl = 'https:' + streamUrl;
-
-                    var playlist = [{
-                        title: movie.title,
-                        url: streamUrl,
-                        quality: 'Auto'
-                    }];
-
-                    // Передаем ссылку во встроенный плеер Lampa
-                    Lampa.Player.play(playlist[0]);
-                    Lampa.Player.playlist(playlist);
-                }
-            } else {
-                Lampa.Noty.show('Видео не найдено в базе');
-            }
-        }, function () {
-            Lampa.Noty.show('Ошибка: Балансер не отвечает');
-        }, false, {
-            dataType: 'json'
-        });
-    }
-
-    if (!window.MyFreeStream_plugin) {
-        startMyPlugin();
-    }
-})();
+    // Проверяем, подхватит ли Lampa это видео
+    Lampa.Player.play(playlist[0]);
+    Lampa.Player.playlist(playlist);
+}
