@@ -1,42 +1,51 @@
 (function () {
     'use strict';
 
-    function SmartLampaOptimizer() {
+    function LampaOptimizer() {
         this.init = function () {
+            // Добавляем стили для ускорения
             const style = document.createElement('style');
             style.textContent = `
-                /* Форсируем использование видеокарты для всех карточек */
+                /* Форсируем аппаратное ускорение */
                 .card, .items__item, .full-start__bg {
-                    will-change: transform;
-                    transform: translateZ(0);
-                    -webkit-transform: translateZ(0);
+                    will-change: transform !important;
+                    transform: translateZ(0) !important;
+                    -webkit-transform: translateZ(0) !important;
                 }
 
-                /* Вместо тяжелого динамического блюра используем мягкий градиент */
-                /* Это сохранит "вайб" Apple TV, но разгрузит процессор */
-                .full-start__bg {
-                    filter: none !important;
-                    background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%) !important;
+                /* Заменяем тяжелый блюр на быстрый градиент */
+                .full-start__bg, .card__background, .blur {
+                    backdrop-filter: none !important;
+                    -webkit-backdrop-filter: none !important;
+                    background: rgba(0, 0, 0, 0.85) !important;
                 }
 
-                /* Оставляем тени только у активного элемента (фокуса) */
-                .card:not(.focus) {
+                /* Убираем тени, которые тормозят скролл на Apple TV Gen 1 */
+                .card, .button {
                     box-shadow: none !important;
-                }
-                .card.focus {
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important;
-                }
-
-                /* Ограничиваем анимацию только для перемещения фокуса */
-                .card {
-                    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    -webkit-box-shadow: none !important;
                 }
             `;
             document.head.appendChild(style);
-            console.log('Smart Optimizer: Эстетика сохранена, лаги убраны.');
+
+            // Визуальное подтверждение загрузки для дебага
+            // Если ты увидишь это сообщение при старте - значит код работает!
+            setTimeout(function() {
+                if (window.Lampa && Lampa.Noty) {
+                    Lampa.Noty.show('Apple TV Optimizer Active');
+                } else {
+                    console.log('Optimizer loaded, but Lampa UI not ready');
+                }
+            }, 2000);
         };
     }
 
-    if (window.appready) new SmartLampaOptimizer().init();
-    else Lampa.Listener.follow('app', (e) => { if (e.type == 'ready') new SmartLampaOptimizer().init(); });
+    // Правильная инициализация плагина
+    if (window.appready) {
+        new LampaOptimizer().init();
+    } else {
+        Lampa.Listener.follow('app', function (e) {
+            if (e.type == 'ready') new LampaOptimizer().init();
+        });
+    }
 })();
