@@ -1,64 +1,62 @@
 (function () {
     'use strict';
 
-    function LampaUltraBoost() {
+    function LampaRealBoost() {
         this.init = function () {
-            this.injectStyles();
-            this.showStatus();
-            console.log('Boost: Инициализировано');
-        };
+            // 1. ПРИНУДИТЕЛЬНО МЕНЯЕМ НАСТРОЙКИ САМОЙ ЛАМПЫ
+            // Это то же самое, что выключить всё вручную в меню, но надежнее
+            Lampa.Storage.set('animation', 'false'); // Вырубаем системные анимации Lampa
+            Lampa.Storage.set('background', 'false'); // Отключаем подгрузку фонов
+            Lampa.Storage.set('background_type', 'solid'); // Ставим заливку цветом
 
-        this.injectStyles = function () {
-            const styleId = 'lampa-boost-styles';
-            if (document.getElementById(styleId)) return;
-
-            const style = document.createElement('style');
-            style.id = styleId;
+            // 2. ВНЕДРЯЕМ АГРЕССИВНЫЙ CSS
+            var style = document.createElement('style');
             style.textContent = `
-                /* 1. ГАСИМ БЛЮР ВЕЗДЕ - это 80% нагрузки на Apple TV Gen 1 */
-                .full-start__bg, .card__background, .blur, .base-button.white, .glass {
+                /* Убиваем все эффекты и плавность намертво */
+                * {
+                    box-shadow: none !important;
+                    text-shadow: none !important;
                     backdrop-filter: none !important;
                     -webkit-backdrop-filter: none !important;
-                    background: rgba(10, 10, 10, 0.9) !important;
-                    filter: none !important;
+                    /* Отключение transition дает мгновенный отклик при нажатии на пульт */
+                    transition: none !important; 
+                    -webkit-transition: none !important;
                 }
 
-                /* 2. УБИРАЕМ ТЕНИ - разгружаем отрисовку слоев */
-                .card, .button, .img-fluid, .full-start__poster {
-                    box-shadow: none !important;
-                    -webkit-box-shadow: none !important;
+                /* Делаем фоны глухими черными, чтобы не рендерить слои */
+                .full-start__bg, .blur, .app__bg {
+                    background: #000 !important;
+                    background-image: none !important;
                 }
 
-                /* 3. УСКОРЯЕМ АНИМАЦИИ (делаем их нативными для глаза) */
-                * {
-                    -webkit-transition-duration: 100ms !important;
-                    transition-duration: 100ms !important;
+                /* Заставляем картинки рендериться быстрее в ущерб идеальному сглаживанию */
+                img {
+                    image-rendering: -webkit-optimize-contrast !important;
                 }
 
-                /* ТЕСТОВЫЙ ПУНКТ: если ты видишь это, значит CSS применился */
-                /* Можно удалить после проверки */
-                /* .full-start { border: 5px solid red !important; } */
+                /* Форсируем использование аппаратного ускорения для карточек фильмов */
+                .card, .items__item {
+                    will-change: transform !important;
+                    transform: translateZ(0) !important;
+                }
             `;
             document.head.appendChild(style);
-        };
 
-        this.showStatus = function () {
-            // Ждем готовности UI, чтобы показать уведомление
-            var checkReady = setInterval(function() {
+            // 3. УВЕДОМЛЕНИЕ ДЛЯ ТЕБЯ
+            setTimeout(function() {
                 if (window.Lampa && Lampa.Noty) {
-                    clearInterval(checkReady);
-                    Lampa.Noty.show('🚀 Boost Active: Blur Disabled');
+                    Lampa.Noty.show('⚡ Агрессивный Boost Активирован. Анимации отключены.');
                 }
-            }, 500);
+            }, 1500);
         };
     }
 
-    // Запуск с проверкой готовности среды
+    // Правильный запуск после полной загрузки приложения
     if (window.appready) {
-        new LampaUltraBoost().init();
+        new LampaRealBoost().init();
     } else {
         Lampa.Listener.follow('app', function (e) {
-            if (e.type == 'ready') new LampaUltraBoost().init();
+            if (e.type == 'ready') new LampaRealBoost().init();
         });
     }
 })();
