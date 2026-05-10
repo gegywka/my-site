@@ -1,42 +1,29 @@
-(function () {
-    'use strict';
+/* УБИВАЕМ ПЕРЕГРУЗКУ ЭКРАНА (Паттерн Apple TV+) */
+/* Выбираем все строки со списками фильмов */
+.items__line, .b-slider {
+    opacity: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    transform: translateY(50px) scale(0.9) !important;
+    transition: all 0.3s ease-out !important;
+    pointer-events: none !important;
+}
 
-    function SmartLampaOptimizer() {
-        this.init = function () {
-            const style = document.createElement('style');
-            style.textContent = `
-                /* Форсируем использование видеокарты для всех карточек */
-                .card, .items__item, .full-start__bg {
-                    will-change: transform;
-                    transform: translateZ(0);
-                    -webkit-transform: translateZ(0);
-                }
+/* Показываем ТОЛЬКО ту строку, внутри которой находится курсор (фокус) */
+.items__line:focus-within, .b-slider:focus-within {
+    opacity: 1 !important;
+    height: auto !important;
+    margin-bottom: 20px !important;
+    transform: translateY(0) scale(1) !important;
+    pointer-events: auto !important;
+    
+    /* Прижимаем строку к нижней части экрана */
+    position: relative;
+    z-index: 10;
+}
 
-                /* Вместо тяжелого динамического блюра используем мягкий градиент */
-                /* Это сохранит "вайб" Apple TV, но разгрузит процессор */
-                .full-start__bg {
-                    filter: none !important;
-                    background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%) !important;
-                }
-
-                /* Оставляем тени только у активного элемента (фокуса) */
-                .card:not(.focus) {
-                    box-shadow: none !important;
-                }
-                .card.focus {
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important;
-                }
-
-                /* Ограничиваем анимацию только для перемещения фокуса */
-                .card {
-                    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) !important;
-                }
-            `;
-            document.head.appendChild(style);
-            console.log('Smart Optimizer: Эстетика сохранена, лаги убраны.');
-        };
-    }
-
-    if (window.appready) new SmartLampaOptimizer().init();
-    else Lampa.Listener.follow('app', (e) => { if (e.type == 'ready') new SmartLampaOptimizer().init(); });
-})();
+/* Скрываем заголовки неактивных категорий, чтобы не мусорить на экране */
+.items__title:not(:focus-within) {
+    opacity: 0.3 !important;
+}
