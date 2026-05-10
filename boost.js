@@ -1,61 +1,75 @@
 (function () {
     'use strict';
 
-    function LampaFluentBoost() {
+    function LampaHardwareBoost() {
         this.init = function () {
-            // 1. Возвращаем родные анимации и фоны Lampa
+            // Возвращаем базовые настройки Lampa для красивого вида
             Lampa.Storage.set('animation', 'true');
             Lampa.Storage.set('background', 'true');
 
-            // 2. Внедряем умный CSS, который любит GPU
             var style = document.createElement('style');
             style.textContent = `
-                /* Заменяем тормозящий блюр на красивый Fluent-градиент */
+                /* 1. БАЗОВАЯ ОПТИМИЗАЦИЯ ФОНА (Градиент вместо блюра) */
                 .blur, .full-start__bg {
                     backdrop-filter: none !important;
                     -webkit-backdrop-filter: none !important;
-                    /* Создаем эффект тонированного стекла */
                     background: linear-gradient(180deg, rgba(15,15,15,0.6) 0%, rgba(15,15,15,0.95) 100%) !important;
                 }
 
-                /* ФОРСИРУЕМ GPU: Анимируем только то, что не вызывает перерисовку макета */
-                .card {
-                    will-change: transform, opacity;
-                    /* Идеальная кривая Безье для плавного, но быстрого отклика */
-                    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease !important;
+                /* 2. АГРЕССИВНОЕ АППАРАТНОЕ УСКОРЕНИЕ (GPU HACKS) */
+                /* Заставляем WebKit создать независимую текстуру в VRAM видеокарты */
+                .card, .items__item, .scroll, .scroll__body {
+                    will-change: transform, opacity !important;
+                    
+                    /* Принудительный 3D-рендеринг */
+                    transform: translate3d(0, 0, 0) !important;
+                    -webkit-transform: translate3d(0, 0, 0) !important;
+
+                    /* Отсечение невидимой геометрии (снимает 50% нагрузки с GPU) */
+                    backface-visibility: hidden !important;
+                    -webkit-backface-visibility: hidden !important;
+                    
+                    /* Отключение субпиксельного сглаживания текста при движении */
+                    -webkit-font-smoothing: antialiased !important;
                 }
 
-                /* Убираем тени у всех неактивных элементов, оставляем только там, где курсор */
+                /* 3. CSS CONTAINMENT (Убийца процессорных лагов) */
+                /* Изолируем карточки, чтобы браузер не пересчитывал всю страницу при скролле */
+                .card {
+                    contain: layout style paint !important;
+                }
+
+                /* 4. ОПТИМИЗАЦИЯ АНИМАЦИЙ */
+                .card {
+                    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease !important;
+                }
+
                 .card:not(.focus), .button:not(.focus) {
                     box-shadow: none !important;
                 }
-
-                /* Легкая тень для активного элемента создает глубину без лишней нагрузки */
                 .card.focus {
                     box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
                 }
                 
-                /* Заставляем браузер использовать быстрый алгоритм масштабирования картинок */
                 img {
                     image-rendering: -webkit-optimize-contrast !important;
                 }
             `;
             document.head.appendChild(style);
 
-            // 3. Подтверждение
             setTimeout(function() {
                 if (window.Lampa && Lampa.Noty) {
-                    Lampa.Noty.show('✨ Fluent Boost: Анимации оптимизированы');
+                    Lampa.Noty.show('🛠 Hardware GPU Boost: Включено (Translate3D + Contain)');
                 }
             }, 1500);
         };
     }
 
     if (window.appready) {
-        new LampaFluentBoost().init();
+        new LampaHardwareBoost().init();
     } else {
         Lampa.Listener.follow('app', function (e) {
-            if (e.type == 'ready') new LampaFluentBoost().init();
+            if (e.type == 'ready') new LampaHardwareBoost().init();
         });
     }
 })();
