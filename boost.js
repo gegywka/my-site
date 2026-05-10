@@ -1,56 +1,53 @@
 (function () {
     'use strict';
 
-    function LampaHardwareBoost() {
+    function LampaScrollOptimizer() {
         this.init = function () {
-            // Возвращаем базовые настройки Lampa для красивого вида
+            // Возвращаем нативные настройки для стабильности
             Lampa.Storage.set('animation', 'true');
             Lampa.Storage.set('background', 'true');
 
             var style = document.createElement('style');
             style.textContent = `
-                /* 1. БАЗОВАЯ ОПТИМИЗАЦИЯ ФОНА (Градиент вместо блюра) */
+                /* 1. ИСПРАВЛЕНИЕ СКРОЛЛА И ФОНА */
                 .blur, .full-start__bg {
                     backdrop-filter: none !important;
                     -webkit-backdrop-filter: none !important;
-                    background: linear-gradient(180deg, rgba(15,15,15,0.6) 0%, rgba(15,15,15,0.95) 100%) !important;
+                    background: linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(0,0,0,0.95) 100%) !important;
                 }
 
-                /* 2. АГРЕССИВНОЕ АППАРАТНОЕ УСКОРЕНИЕ (GPU HACKS) */
-                /* Заставляем WebKit создать независимую текстуру в VRAM видеокарты */
-                .card, .items__item, .scroll, .scroll__body {
-                    will-change: transform, opacity !important;
-                    
-                    /* Принудительный 3D-рендеринг */
-                    transform: translate3d(0, 0, 0) !important;
+                /* 2. ОПТИМИЗАЦИЯ КОНТЕЙНЕРА ПРОКРУТКИ */
+                /* Заставляем сам список фильмов летать на GPU */
+                .scroll, .scroll__body, .items {
+                    will-change: transform !important;
                     -webkit-transform: translate3d(0, 0, 0) !important;
+                    transform: translate3d(0, 0, 0) !important;
+                }
 
-                    /* Отсечение невидимой геометрии (снимает 50% нагрузки с GPU) */
-                    backface-visibility: hidden !important;
-                    -webkit-backface-visibility: hidden !important;
+                /* 3. ОПТИМИЗАЦИЯ КАРТОЧЕК (БЕЗ БЛОКИРОВКИ МАКЕТА) */
+                .card, .items__item {
+                    /* Оставляем только paint-изоляцию, она не ломает скролл */
+                    contain: paint !important;
                     
-                    /* Отключение субпиксельного сглаживания текста при движении */
-                    -webkit-font-smoothing: antialiased !important;
+                    will-change: transform, opacity !important;
+                    -webkit-transform: translate3d(0, 0, 0) !important;
+                    transform: translate3d(0, 0, 0) !important;
+                    
+                    -webkit-backface-visibility: hidden !important;
+                    backface-visibility: hidden !important;
                 }
 
-                /* 3. CSS CONTAINMENT (Убийца процессорных лагов) */
-                /* Изолируем карточки, чтобы браузер не пересчитывал всю страницу при скролле */
-                .card {
-                    contain: layout style paint !important;
-                }
-
-                /* 4. ОПТИМИЗАЦИЯ АНИМАЦИЙ */
+                /* 4. ВОЗВРАЩАЕМ ПЛАВНОСТЬ АНИМАЦИИ */
                 .card {
                     transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease !important;
                 }
 
-                .card:not(.focus), .button:not(.focus) {
+                /* Убираем лишние тени для облегчения отрисовки */
+                .card:not(.focus) {
                     box-shadow: none !important;
                 }
-                .card.focus {
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
-                }
                 
+                /* Ускоряем работу с изображениями */
                 img {
                     image-rendering: -webkit-optimize-contrast !important;
                 }
@@ -59,17 +56,17 @@
 
             setTimeout(function() {
                 if (window.Lampa && Lampa.Noty) {
-                    Lampa.Noty.show('🛠 Hardware GPU Boost: Включено (Translate3D + Contain)');
+                    Lampa.Noty.show('✅ Scroll Fixed & GPU Boosted');
                 }
             }, 1500);
         };
     }
 
     if (window.appready) {
-        new LampaHardwareBoost().init();
+        new LampaScrollOptimizer().init();
     } else {
         Lampa.Listener.follow('app', function (e) {
-            if (e.type == 'ready') new LampaHardwareBoost().init();
+            if (e.type == 'ready') new LampaScrollOptimizer().init();
         });
     }
 })();
