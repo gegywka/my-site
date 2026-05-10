@@ -58,9 +58,11 @@
 
             var updateFocus = function() {
                 cards.forEach(c => c.classList.remove('focus'));
-                cards[activeIndex].classList.add('focus');
-                var offset = -(activeIndex * 240); 
-                carousel.style.transform = `translateX(${offset}px)`;
+                if (cards[activeIndex]) {
+                    cards[activeIndex].classList.add('focus');
+                    var offset = -(activeIndex * 240); 
+                    carousel.style.transform = `translateX(${offset}px)`;
+                }
             };
 
             updateFocus();
@@ -97,48 +99,57 @@
         this.destroy = function () { network.clear(); html.remove(); };
     }
 
-    // 2. ИНИЦИАЛИЗАЦИЯ И ИНЪЕКЦИЯ ПЛАГИНА
+    // 2. ИНИЦИАЛИЗАЦИЯ И ИНЪЕКЦИЯ ПЛАГИНА (DOM ПОЛЛИНГ)
     function initAppleTVPlugin() {
         Lampa.Component.add('appletv_page', AppleTVComponent);
 
-        var addMenuButton = function() {
-            // Проверяем, нет ли уже кнопки, чтобы не дублировать
-            if ($('.appletv-menu-btn').length) return;
-
-            var menuItem = $(`
-                <li class="menu__item selector appletv-menu-btn">
-                    <div class="menu__ico">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                            <path d="M21 3H3C1.89 3 1 3.89 1 5v14c0 1.11.89 2 2 2h18c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 16H3V5h18v14z"/>
-                        </svg>
-                    </div>
-                    <div class="menu__text">Apple TV+</div>
-                </li>
-            `);
+        // Запускаем таймер, который будет искать меню
+        var injectTimer = setInterval(function() {
+            // Ищем контейнер меню (обрабатываем разные сборки Лампы)
+            var menuList = $('.menu .menu__list');
+            if (menuList.length === 0) menuList = $('.menu .scroll__body');
             
-            menuItem.on('hover:enter', function () {
-                Lampa.Activity.push({
-                    url: '',
-                    title: 'Apple TV+',
-                    component: 'appletv_page',
-                    page: 1
+            // Если меню найдено в DOM и нашей кнопки там еще нет
+            if (menuList.length > 0 && !$('.appletv-menu-btn').length) {
+                
+                var menuItem = $(`
+                    <li class="menu__item selector appletv-menu-btn">
+                        <div class="menu__ico">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                <path d="M21 3H3C1.89 3 1 3.89 1 5v14c0 1.11.89 2 2 2h18c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 16H3V5h18v14z"/>
+                            </svg>
+                        </div>
+                        <div class="menu__text">Apple TV+</div>
+                    </li>
+                `);
+                
+                menuItem.on('hover:enter', function () {
+                    Lampa.Activity.push({
+                        url: '',
+                        title: 'Apple TV+',
+                        component: 'appletv_page',
+                        page: 1
+                    });
                 });
-            });
 
-            // Находим левое меню и добавляем в конец
-            if ($('.menu .menu__list').length) {
-                $('.menu .menu__list').eq(0).append(menuItem);
-                Lampa.Noty.show('✅ Добавлен раздел Apple TV+');
+                // Внедряем кнопку
+                menuList.append(menuItem);
+                
+                // Убиваем таймер, задача выполнена
+                clearInterval(injectTimer);
+                
+                // Рапортуем
+                if (window.Lampa && Lampa.Noty) {
+                    Lampa.Noty.show('🍏 Apple TV+ раздел загружен');
+                }
             }
-        };
+        }, 500); // Проверка каждые 500мс
 
-        // Пытаемся добавить кнопку сразу, а также слушаем события отрисовки меню
-        setTimeout(addMenuButton, 1500);
-        Lampa.Listener.follow('menu', function (e) {
-            if (e.type == 'ready') addMenuButton();
-        });
+        // Fallback: убиваем таймер через 20 секунд, чтобы не забивать память, если что-то пошло не так
+        setTimeout(function() { clearInterval(injectTimer); }, 20000);
     }
 
+    // Точка входа
     if (window.appready) initAppleTVPlugin();
     else {
         Lampa.Listener.follow('app', function (e) {
